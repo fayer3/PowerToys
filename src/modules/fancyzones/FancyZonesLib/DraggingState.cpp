@@ -7,6 +7,9 @@
 DraggingState::DraggingState(const std::function<void()>& keyUpdateCallback) :
     m_mouseState(false),
     m_mouseHook(std::bind(&DraggingState::OnMouseDown, this)),
+    m_mouseState2(0),
+    m_mouseState2New(0),
+    m_mouseHook2(std::bind(&DraggingState::OnMouseDown2, this, std::placeholders::_1)),
     m_leftShiftKeyState(keyUpdateCallback),
     m_rightShiftKeyState(keyUpdateCallback),
     m_ctrlKeyState(keyUpdateCallback),
@@ -19,6 +22,7 @@ void DraggingState::Enable()
     if (FancyZonesSettings::settings().mouseSwitch)
     {
         m_mouseHook.enable();
+        m_mouseHook2.enable();
     }
 
     m_leftShiftKeyState.enable();
@@ -46,8 +50,10 @@ void DraggingState::Disable()
 
     m_dragging = false;
     m_mouseState = false;
+    m_mouseState2New = 0;
 
     m_mouseHook.disable();
+    m_mouseHook2.disable();
     m_leftShiftKeyState.disable();
     m_rightShiftKeyState.disable();
     m_ctrlKeyState.disable();
@@ -72,6 +78,20 @@ void DraggingState::OnMouseDown()
     m_keyUpdateCallback();
 }
 
+void DraggingState::OnMouseDown2(bool a)
+{
+    if (m_mouseState2 == 0) {
+        m_mouseState2New = a ? 1 : 2;
+    }
+    else if (m_mouseState2 == 1) {
+        m_mouseState2New = a ? 0 : 2;
+    }
+    else if (m_mouseState2 == 2) {
+        m_mouseState2New = a ? 1 : 0;
+    }
+    m_keyUpdateCallback();
+}
+
 bool DraggingState::IsDragging() const noexcept
 {
     return m_dragging;
@@ -80,4 +100,14 @@ bool DraggingState::IsDragging() const noexcept
 bool DraggingState::IsSelectManyZonesState() const noexcept
 {
     return m_ctrlKeyState.state();
+}
+
+int DraggingState::CurrentLayoutState() noexcept
+{
+    int ret = -1;
+    if (m_mouseState2New != m_mouseState2)
+    {
+        ret = m_mouseState2 =  m_mouseState2New.load();
+    }
+    return ret;
 }

@@ -1,18 +1,18 @@
 #include "pch.h"
-#include "SecondaryMouseButtonsHook.h"
+#include "SecondaryMouseButtonsHook2.h"
 #include <common/debug_control.h>
 
 #pragma region public
 
-HHOOK SecondaryMouseButtonsHook::hHook = {};
-std::function<void()> SecondaryMouseButtonsHook::callback = {};
+HHOOK SecondaryMouseButtonsHook2::hHook = {};
+std::function<void(bool)> SecondaryMouseButtonsHook2::callback = {};
 
-SecondaryMouseButtonsHook::SecondaryMouseButtonsHook(std::function<void()> extCallback)
+SecondaryMouseButtonsHook2::SecondaryMouseButtonsHook2(std::function<void(bool)> extCallback)
 {
     callback = std::move(extCallback);
 }
 
-void SecondaryMouseButtonsHook::enable()
+void SecondaryMouseButtonsHook2::enable()
 {
 #if defined(DISABLE_LOWLEVEL_HOOKS_WHEN_DEBUGGED)
     if (IsDebuggerPresent())
@@ -26,7 +26,7 @@ void SecondaryMouseButtonsHook::enable()
     }
 }
 
-void SecondaryMouseButtonsHook::disable()
+void SecondaryMouseButtonsHook2::disable()
 {
     if (hHook)
     {
@@ -39,13 +39,14 @@ void SecondaryMouseButtonsHook::disable()
 
 #pragma region private
 
-LRESULT CALLBACK SecondaryMouseButtonsHook::SecondaryMouseButtonsProc(int nCode, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK SecondaryMouseButtonsHook2::SecondaryMouseButtonsProc(int nCode, WPARAM wParam, LPARAM lParam)
 {
     if (nCode == HC_ACTION)
     {
-        if (wParam == WM_RBUTTONDOWN || wParam == WM_MBUTTONDOWN)
+        if (wParam == WM_XBUTTONDOWN)
         {
-            callback();
+            auto mouseStruct = *((MSLLHOOKSTRUCT*)lParam);
+            callback(mouseStruct.mouseData & 0x10000);
         }
     }
     return CallNextHookEx(hHook, nCode, wParam, lParam);

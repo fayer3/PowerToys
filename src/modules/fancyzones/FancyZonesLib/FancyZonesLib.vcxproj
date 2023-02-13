@@ -65,6 +65,7 @@
     <ClInclude Include="Generated Files/resource.h" />
     <None Include="resource.base.h" />
     <ClInclude Include="SecondaryMouseButtonsHook.h" />
+    <ClInclude Include="SecondaryMouseButtonsHook2.h" />
     <ClInclude Include="Settings.h" />
     <ClInclude Include="SettingsConstants.h" />
     <ClInclude Include="SettingsObserver.h" />
@@ -119,6 +120,7 @@
       <PrecompiledHeader Condition="'$(CIBuild)'!='true'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SecondaryMouseButtonsHook.cpp" />
+    <ClCompile Include="SecondaryMouseButtonsHook2.cpp" />
     <ClCompile Include="Settings.cpp" />
     <ClCompile Include="trace.cpp" />
     <ClCompile Include="util.cpp" />

@@ -142,6 +142,7 @@ private:
     void UpdateActiveLayouts() noexcept;
     bool ShouldProcessSnapHotkey(DWORD vkCode) noexcept;
     void ApplyQuickLayout(int key) noexcept;
+    void ApplyQuickLayoutNoFlash(int key) noexcept;
     void FlashZones() noexcept;
 
     std::vector<std::pair<HMONITOR, RECT>> GetRawMonitorData() noexcept;
@@ -306,6 +307,19 @@ void FancyZones::MoveSizeUpdate(HMONITOR monitor, POINT const& ptScreen)
 
         m_draggingState.UpdateDraggingState();
         m_windowDrag->MoveSizeUpdate(monitor, ptScreen, m_draggingState.IsDragging(), m_draggingState.IsSelectManyZonesState());
+        if (m_draggingState.IsDragging())
+        {
+            int layoutSwitch = m_draggingState.CurrentLayoutState();
+            if (layoutSwitch >= 0)
+            {
+                auto layoutId = LayoutHotkeys::instance().GetLayoutId(layoutSwitch);
+                if (layoutId.has_value())
+                {
+                    PostMessageW(m_window, WM_PRIV_QUICK_LAYOUT_KEY_NOFLASH, 0, static_cast<LPARAM>(layoutSwitch));
+                    Trace::FancyZones::QuickLayoutSwitched(false);
+                }
+            }
+        }
     }
 }
 
@@ -668,6 +682,10 @@ LRESULT FancyZones::WndProc(HWND window, UINT message, WPARAM wparam, LPARAM lpa
         else if (message == WM_PRIV_QUICK_LAYOUT_KEY)
         {
             ApplyQuickLayout(static_cast<int>(lparam));
+        }
+        else if (message == WM_PRIV_QUICK_LAYOUT_KEY_NOFLASH)
+        {
+            ApplyQuickLayoutNoFlash(static_cast<int>(lparam));
         }
         else if (message == WM_PRIV_SETTINGS_CHANGED)
         {
@@ -1190,6 +1208,30 @@ void FancyZones::ApplyQuickLayout(int key) noexcept
         AppliedLayouts::instance().SaveData();
         UpdateActiveLayouts();
         FlashZones();
+    }
+}
+
+void FancyZones::ApplyQuickLayoutNoFlash(int key) noexcept
+{
+    auto layoutId = LayoutHotkeys::instance().GetLayoutId(key);
+    if (!layoutId)
+    {
+        return;
+    }
+
+    // Find a custom zone set with this uuid and apply it
+    auto layout = CustomLayouts::instance().GetLayout(layoutId.value());
+    if (!layout)
+    {
+        return;
+    }
+
+    auto workArea = m_workAreaHandler.GetWorkAreaFromCursor();
+    if (workArea)
+    {
+        AppliedLayouts::instance().ApplyLayout(workArea->UniqueId(), layout.value());
+        AppliedLayouts::instance().SaveData();
+        UpdateActiveLayouts();
     }
 }
 
