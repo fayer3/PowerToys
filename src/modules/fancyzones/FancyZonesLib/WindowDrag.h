@@ -13,7 +13,7 @@ public:
     ~WindowDrag();
 
     bool MoveSizeStart(HMONITOR monitor, bool isSnapping);
-    void MoveSizeUpdate(HMONITOR monitor, POINT const& ptScreen, bool isSnapping, bool isSelectManyZonesState);
+    void MoveSizeUpdate(HMONITOR monitor, POINT const& ptScreen, bool isSnapping, bool isSelectManyZonesState, bool forceRedraw);
     void MoveSizeEnd();
 
 private:
